@@ -2,8 +2,10 @@
 all: hello.rom addchecksum
 
 hello.rom: hello.asm addchecksum
-	nasm $< -fbin -o $@
-	./addchecksum $@ || rm $@
+	nasm $< -fbin -o $@.tmp
+	./addchecksum $@.tmp || rm $@.tmp
+	dd if=/dev/zero of=$@ bs=1 count=65536
+	dd if=$@.tmp of=$@ bs=1 conv=notrunc
 
 addchecksum: addchecksum.c
 	gcc -o $@ $< -Wall
