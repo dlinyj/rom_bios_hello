@@ -1,2 +1,6 @@
 hello.rom
 addchecksum
+*.rom
+*.bin
+*.tmp
+

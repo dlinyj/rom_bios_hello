@@ -1,39 +1,4 @@
 org 0
-rom_size_multiple_of equ 512
-bits 16
-    db 0x55, 0xAA ; signature
-    db rom_size/512; initialization size in 512 byte blocks
-
-    jmp _init
-
-    db 0x00     ; miejsce na sumê kontroln±, offset 0x0006
-
-_init:
-    cld
-    xor si,si ;otkuda
-;   mov si, start
-    nop
-    xor di,di ;kuda
-    mov cx,0x8000
-    mov es,cx
-    mov ax,cs
-    mov ds,ax
-    rep
-    movsw
-
-; inicjalizacja steka (0000:fffe) i segmentu dannyh
-
-    mov ax,0xfffe
-    mov sp,ax
-    xor ax,ax
-    mov ss,ax
-
-    mov ax,0x8000
-    mov ds,ax
-
-    jmp 0x8000:_start
-;   jmp 0x8000:0000
-
 _start:
     push CS
     pop DS
@@ -151,8 +116,3 @@ hello_world_msg db `Hello World.\0`
     ; --------------------------------------------------
 
     db 0 ; reserve at least one byte for checksum
-rom_end equ $-$$
-rom_size equ (((rom_end-1)/rom_size_multiple_of)+1)*rom_size_multiple_of
-;    times rom_size - rom_end db 0 ; padding
-
-
