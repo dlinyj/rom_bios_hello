@@ -18,6 +18,7 @@ hello:
     call puts
     pop AX
     call getc
+    retf
 
 cls:
     ; Clear screen
@@ -115,7 +116,7 @@ getc: ; changes AH...
     int 0x16 
     ret
 
-hello_world_msg db `Hello World.\0`
+hello_world_msg db `Hello World.\r\n\0`
 
     cur_style db 0x07 ; grey on black = default
 ;    sp_orig dw 0x0000 ; original stack pointer for returning in case of an error
