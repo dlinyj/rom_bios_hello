@@ -1,11 +1,16 @@
-org 0
-rom_size_multiple_of equ 512
-bits 16
-    ; PCI Expansion Rom Header
-    ; ------------------------
-    db 0x55, 0xAA ; signature
-    db rom_size/512; initialization size in 512 byte blocks
-entry_point: jmp start
+%ifdef COM_FILE
+    BITS 16
+    ORG 100h
+%else
+    BITS 16
+    ORG 0
+%endif
+
+%ifndef COM_FILE
+    ; ROM BIOS header
+    db 0x55, 0xAA        ; signature
+    db rom_size/512      ; size in 512 byte blocks
+%endif
 start:
     push CS
     pop DS
@@ -18,7 +23,14 @@ hello:
     call puts
     pop AX
     call getc
+%ifdef COM_FILE
+    ; COM exit
+    mov ax, 0x4c00
+    int 21h
+%else
+    ; ROM return
     retf
+%endif
 
 cls:
     ; Clear screen
@@ -119,13 +131,13 @@ getc: ; changes AH...
 hello_world_msg db `Hello World.\r\n\0`
 
     cur_style db 0x07 ; grey on black = default
-;    sp_orig dw 0x0000 ; original stack pointer for returning in case of an error
-    ; ROM padding, checksum needs to be added separately
-    ; --------------------------------------------------
-
-    db 0 ; reserve at least one byte for checksum
-rom_end equ $-$$
-rom_size equ (((rom_end-1)/rom_size_multiple_of)+1)*rom_size_multiple_of
-;    times rom_size - rom_end db 0 ; padding
+%ifndef COM_FILE
+    ; ROM size calculation
+    rom_end equ $-$$
+    rom_size equ (((rom_end-1)/512)+1)*512
+    ; Padding to full size
+    times rom_size-($-$$)-1 db 0
+    db 0    ; Place for checksum
+%endif
 
 
