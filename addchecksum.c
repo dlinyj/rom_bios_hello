@@ -1,29 +1,46 @@
-/* addchecksum.c -- Calculate byte-wise checksum and overwrite last byte for PCI 
- * Copyright (C) 2014, Tobias Kaiser <mail@tb-kaiser.de>
- */ 
-
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 int main(int argc, char *argv[]) {
-    if(argc!=2) {
-        fprintf(stderr, "Usage: %s FILE\n\n", argv[0]);
-        exit(1);
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <rom_file>\n", argv[0]);
+        return 1;
     }
-    FILE *f=fopen(argv[1], "r+");
-    if(!f) {
-        perror("fopen failed");
-        exit(1);
+
+    FILE *f = fopen(argv[1], "rb+");
+    if (!f) {
+        perror("Cannot open file");
+        return 1;
     }
+
+    // Получаем размер файла
     fseek(f, 0, SEEK_END);
-    int f_size=ftell(f);
-    fseek(f, 0, SEEK_SET);
-    unsigned char sum=0;
-    int i;
-    for(i=0;i<f_size-1;i++) {
-        sum+=fgetc(f);
+    long size = ftell(f);
+    rewind(f);
+
+    // Читаем данные
+    uint8_t *data = malloc(size);
+    if (fread(data, 1, size, f) != size) {
+        perror("Read error");
+        fclose(f);
+        free(data);
+        return 1;
     }
-    fputc((0x100-sum)&0xff, f);
+
+    // Вычисляем контрольную сумму
+    uint8_t checksum = 0;
+    for (long i = 0; i < size - 1; i++) {
+        checksum += data[i];
+    }
+    checksum = -checksum;  // Инвертируем для получения нулевой суммы
+
+    // Записываем контрольную сумму в последний байт
+    fseek(f, size - 1, SEEK_SET);
+    fwrite(&checksum, 1, 1, f);
+
     fclose(f);
-    return 0; 
+    free(data);
+    printf("Checksum calculated and written: 0x%02X\n", checksum);
+    return 0;
 }
